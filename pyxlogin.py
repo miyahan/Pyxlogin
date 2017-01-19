@@ -1,6 +1,4 @@
-#!/usr/bin/python3
 """Pyxlogin class file."""
-import argparse
 import io
 import logging
 
@@ -10,19 +8,10 @@ import pexpect
 class Pyxlogin(object):
     """Pyxlogin class."""
 
-    ARCHITECTURES = {
-        'linux': 'Linux/UNIX',
-        'cisco': 'Cisco IOS',
-        'smdcf': 'SMDC(F)',
-        'smdcn': 'SMDC(N)',
-        'alaxala': 'Alaxala OS-R',
-    }
-
     def __init__(
         self,
         hostname,
         port=None,
-        arch='cisco',
         username='',
         password='',
         enable_username=None,
@@ -30,20 +19,18 @@ class Pyxlogin(object):
         timeout=10,
         use_telnet=False,
         encoding='utf-8',
-        commands=[]
     ):
         """constructor.
 
         :param str hostname: remote host hostname
         :param int port: remote host port (default:auto)
-        :param str arch: remote host architecture type. See cls.ARCHITECTURE
         :param str username: remote host username
         :param str password: remote host password
-        :param str enable_username: remote host enable-mode username (If blank, use the username value)
-        :param str enable_password: remote host enable-mode password (If blank, use the password value)
-        :param int timeout: pexpect timeout value [sec] (global)
+        :param str enable_username: remote host enable-mode username (If blank, use username value)
+        :param str enable_password: remote host enable-mode password (If blank, use password value)
+        :param int timeout: pexpect spawn timeout [sec]
         :param boolean use_telnet: if True, connect by telnet (default: False (SSH))
-        :param str encoding: remote host charcode (default: utf-8) 
+        :param str encoding: remote host charcode (default: utf-8)
         """
         self.logger = logging.getLogger('pyxlogin')
         stdout_handler = logging.StreamHandler()
@@ -58,24 +45,6 @@ class Pyxlogin(object):
         self.enable_password = enable_password or password or ''
         self.timeout = int(timeout)
         self.encoding = encoding
-
-        if arch == 'linux':
-            from linux import Linux
-            self.arch = Linux
-        elif arch == 'cisco':
-            from cisco import Cisco
-            self.arch = Cisco
-        elif arch == 'smdcf':
-            from smdcf import Smdcf
-            self.arch = Smdcf
-        elif arch == 'smdcn':
-            from smdcn import Smdcn
-            self.arch = Smdcn
-        elif arch == 'alaxala':
-            from alaxala import Alaxala
-            self.arch = Alaxala
-        else:
-            raise ValueError('Unknown arch type')
 
         if port is int and 0 < port < 65536:
             self.port = port
@@ -108,10 +77,10 @@ class Pyxlogin(object):
         self.exp.logfile_send = self.log_send
         while True:
             index = self.exp.expect([
-                self.arch.prompt,  # 0
-                self.arch.prompt_lowauth,  # 1
-                r'([uU]sername|[lL]ogin):\s*$',  # 2
-                r'([pP]assword|パスワード):\s*$',  # 3
+                self.PROMPT_ENABLE,  # 0
+                self.PROMPT_LOWAUTH,  # 1
+                self.PROMPT_USERNAME,  # 2
+                self.PROMPT_PASSWORD,  # 3
                 r'Are you sure you want to continue connecting',  # 4
                 r'Host key verification failed',  # 5
                 r'Authentication failed',  # 6
@@ -125,18 +94,21 @@ class Pyxlogin(object):
                 self.logger.debug('login: prompt was detected. login succeeded.')
                 break
             elif index == 1:
-                self.logger.debug('login: low-authority prompt was detected. will call enable().')
-                if self.arch.auto_enable:
+                if self.AUTO_ENABLE:
+                    self.logger.debug('login: low-authority prompt was detected. will call enable().')
                     self.enable()
+                else:
+                    self.logger.debug('login: low-authority prompt was detected. login succeeded.')
+                    break
             elif index == 2:
                 self.logger.debug('login: username prompt was detected. will send username.')
-                self.exp.send(self.username + self.arch.linesep)
+                self.exp.send(self.username + self.LINESEP)
             elif index == 3:
                 self.logger.debug('login: password prompt was detected. will send password.')
-                self.exp.send(self.password + self.arch.linesep)
+                self.exp.send(self.password + self.LINESEP)
             elif index == 4:
                 self.logger.debug('login: Host key verification message was detected. will answer YES.')
-                self.exp.send('yes' + self.arch.linesep)
+                self.exp.send('yes' + self.LINESEP)
             elif index == 5:
                 self.logger.debug('login: Host key verification failed')
                 raise Exception('Host key verification failed')
@@ -159,49 +131,49 @@ class Pyxlogin(object):
                 self.logger.debug('login: No address associated')
                 raise Exception('No address associated')
 
-        for command in self.arch.innit_commands:
+        for command in self.INNIT_COMMANDS:
             self.logger.debug("login: Execute innit command: '{}'".format(command))
             self.execute(command)
 
     def enable(self):
-        """change to enable mode."""
-        self.exp.send(self.arch.enable_command + self.arch.linesep)
+        """change to enable/root mode."""
+        self.exp.send(self.ENABLE_COMMAND + self.LINESEP)
         while True:
             index = self.exp.expect([
-                self.arch.prompt,  # 0
-                r'[uU]sername:\s*',  # 1
-                r'[pP]assword:\s*',  # 2
+                self.PROMPT_ENABLE,  # 0
+                self.PROMPT_USERNAME,  # 1
+                self.PROMPT_PASSWORD,  # 2
                 r'Access denied',
             ])
             if index == 0:
                 self.logger.debug('enbale: enable-prompt was detected. enable succeeded.')
-                self.exp.send(self.arch.linesep)
+                self.exp.send(self.LINESEP)
                 break
             elif index == 1:
                 self.logger.debug('enable: username prompt was detected. will send enable-username.')
-                self.exp.send(self.enable_username + self.arch.linesep)
+                self.exp.send(self.enable_username + self.LINESEP)
             elif index == 2:
                 self.logger.debug('enable: password prompt was detected. will send enable-password.')
-                self.exp.send(self.enable_password + self.arch.linesep)
+                self.exp.send(self.enable_password + self.LINESEP)
             elif index == 3:
                 self.logger.debug('enable: enable failed.')
                 raise Exception('Enable failed')
 
     def execute(self, command, expect=[], newline=True, timeout=None):
         """execute command on remote host."""
-        expect.append(self.arch.prompt)
-        expect.append(self.arch.prompt_lowauth)
+        expect.append(self.PROMPT_ENABLE)
+        expect.append(self.PROMPT_LOWAUTH)
         timeout = timeout or self.timeout
         if newline:
-            self.exp.send(command + self.arch.linesep)
+            self.exp.send(command + self.LINESEP)
         else:
             self.exp.send(command)
 
         self.exp.expect(expect, timeout=timeout)
         return self.exp.before
 
-    def get_log(self, type='mixed'):
-        """get all Telnet/SSH log.
+    def get_vty_log(self, type='mixed'):
+        """get all VTY log.
 
         :param str type:
             mixed: mixed read/send log (default)
@@ -216,32 +188,3 @@ class Pyxlogin(object):
             return self.log_send.getvalue()
         else:
             raise ValueError('log type is invalid')
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='Telnet/SSH and execute commands',
-        prog='pyxlogin.py',
-        usage='%(prog)s -u <USERNAME> -p <VTY PASSWORD> -e <ENABLE PASSWORD> <HOSTNAME>',
-    )
-    parser.add_argument('hostname', help='hostname or IP address', metavar='<HOSTNAME>')
-    parser.add_argument('-a', '--arch', help='remote host architecture (default: cisco)', choices=Pyxlogin.ARCHITECTURES.keys(), metavar='<ARCHITECTURE>')
-    parser.add_argument('-u', '--username', help='VTY username', metavar='<USERNAME>')
-    parser.add_argument('-v', '--password', help='VTY password', metavar='<VTY PASSWORD>')
-    parser.add_argument('-w', '--enable_username', help='enable mode username', metavar='<ENABLE USERNAME>')
-    parser.add_argument('-e', '--enable_password', help='enable mode password', metavar='<ENABLE PASSWORD>')
-    parser.add_argument('-t', '--timeout', help='timeout [sec]', metavar='<TIMEOUT>', default=10, type=int)
-    parser.add_argument('-c', '--commands', help='commands to run', metavar='<COMMAND>', nargs='+')
-    parser.add_argument('-E', '--encoding', help='remote host encoding (default: utf-8)', metavar='<ENCODING>', default='utf-8')
-    parser.add_argument('-T', '--use_telnet', help='use telnet (default is SSH)', action='store_true')
-    parser.add_argument('-p', '--port', help='port number', type=int)
-    args = parser.parse_args()
-
-    pl = Pyxlogin(**vars(args))
-    try:
-        pl.login()
-        for command in args.commands:
-            print(pl.execute(command))
-    except ValueError as e:
-        print('ERROR! {}'.format(e))
-        print(pl.get_log())

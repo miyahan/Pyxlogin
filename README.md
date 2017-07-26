@@ -13,7 +13,7 @@ Python Telnet Client
 
 ## How to install
 
-`pip3 install -U git+https://github.com/miyahan/pyxlogin.git`
+`pip install -U git+https://github.com/miyahan/pyxlogin.git` (or use SSH)
 
 
 ## Usage
@@ -22,7 +22,7 @@ Python Telnet Client
 
 ```python
 # Telnet to Cisco router
-from pyclogin import CiscoLogin
+from pyxlogin import CiscoLogin
 pl = CiscoLogin('10.0.0.1', usename='admin', password='passpass', use_telnet=Tue)
 pl.login()
 print(pl.execute('show version'))
@@ -31,7 +31,7 @@ print(pl.execute('show ip int brief'))
 
 ```python
 # SSH to Linux server
-from pyllogin import LinuxLogin
+from pyxlogin import LinuxLogin
 pl = LinuxLogin('10.0.0.2', usename='root', password='admin123', encode='euc-jp')
 pl.login()
 print(pl.execute('ls -l'))

@@ -3,12 +3,12 @@ Python Telnet Client
 
 ## Requirement
 
-- Python 3.5 or leater
+- Python 3.6 or leater
 
 
 ## Dependencies
 
-- PIP/pexpect
+- PyPI/pexpect
 
 
 ## How to install
@@ -18,11 +18,11 @@ Python Telnet Client
 
 ## Usage
 
-### Python script
+### via Python script
 
 ```python
 # Telnet to Cisco router
-from pyxlogin import CiscoLogin
+from pyxlogin.cisco_login import CiscoLogin
 pl = CiscoLogin('10.0.0.1', usename='admin', password='passpass', use_telnet=Tue)
 pl.login()
 print(pl.execute('show version'))
@@ -31,13 +31,13 @@ print(pl.execute('show ip int brief'))
 
 ```python
 # SSH to Linux server
-from pyxlogin import LinuxLogin
+from pyxlogin.linux_login import LinuxLogin
 pl = LinuxLogin('10.0.0.2', usename='root', password='admin123', encode='euc-jp')
 pl.login()
 print(pl.execute('ls -l'))
 ```
 
-### Command line
+### via command line
 
 ```shell
 # Telnet to Cisco router

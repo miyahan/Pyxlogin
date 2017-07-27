@@ -2,7 +2,7 @@
 """Pyxlogin Alaxala file."""
 import argparse
 
-from pyxlogin import Pyxlogin
+from pyxlogin.pyxlogin import Pyxlogin
 
 
 class AlaxalaLogin(Pyxlogin):

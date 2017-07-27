@@ -2,7 +2,7 @@
 """Pyxlogin Cisco file."""
 import argparse
 
-from pyxlogin import Pyxlogin
+from pyxlogin.pyxlogin import Pyxlogin
 
 
 class CiscoLogin(Pyxlogin):

@@ -2,7 +2,7 @@
 """Pyxlogin Smdcf class file."""
 import argparse
 
-from pyxlogin import Pyxlogin
+from pyxlogin.pyxlogin import Pyxlogin
 
 
 class SmdcfLogin(Pyxlogin):

@@ -14,5 +14,10 @@ setup(
     keywords='telnet xlogin router',
     packages=find_packages(),
     platforms=['POSIX'],
-    install_requires=['pexpect']
+    install_requires=_requires_from_file('requirements.txt'),
+    classifires=[
+        'Programing Language :: Python :: 3',
+        'Programing Language :: Python :: 3.6',
+        'License :: OSI Approved :: MIT License',
+    ],
 )

@@ -1,5 +1,5 @@
 Python Telnet Client
----
+===
 
 ## Requirement
 
@@ -13,7 +13,14 @@ Python Telnet Client
 
 ## How to install
 
-`pip install -U git+https://github.com/miyahan/pyxlogin.git` (or use SSH)
+### Using PIP
+
+* `pip install -U git+https://github.com/miyahan/pyxlogin.git` (or use SSH)
+
+### Using setup.py
+
+* `git clone git@github.com:miyahan/Pyxlogin.git` (or use HTTPS)
+* `python setup.py install`
 
 
 ## Usage

@@ -10,7 +10,7 @@ setup(
     name='pyxlogin',
     version='0.1',
     description='Python telnet client',
-    long_description='telnet helper',
+    long_description='Telnet/SSH to Linux/UNIX servers and network routers/switches using telnet/ssh and expect commands.',
     license='MIT',
     author='Miyahan',
     author_email='miyahan.com@gmail.com',
